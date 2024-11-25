@@ -1,0 +1,131 @@
+using System;
+using System.Threading;
+
+class ThreadExample
+{
+    private static Thread _workerThread1;
+    private static Thread _workerThread2;
+    private static ManualResetEvent _manualResetEvent = new ManualResetEvent(true); // Initially signaled (true)
+    static void Main()
+    {
+        Run();
+    }
+    static void Run()
+    {
+
+        Console.WriteLine("=== Thread Class Example ===");
+        // Create two worker threads for ManualResetEvent demonstration
+        _workerThread1 = new Thread(WorkerMethodWithManualResetEvent)
+        {
+            Name = "WorkerThread1"
+        };
+        _workerThread2 = new Thread(WorkerMethodWithManualResetEvent)
+        {
+            Name = "WorkerThread2"
+        };
+        _workerThread1.Start();
+        _workerThread2.Start();
+        Console.WriteLine("Main: Both worker threads started.");
+        Thread.Sleep(20);
+        // Demonstrating ManualResetEvent
+        Console.WriteLine("Main: Pausing worker threads using ManualResetEvent.");
+        _manualResetEvent.Reset(); // Pause the threads
+        Thread.Sleep(20);
+        Console.WriteLine("Main: Resuming worker threads using ManualResetEvent.");
+        _manualResetEvent.Set(); // Resume the threads
+        _workerThread1.Join();
+        _workerThread2.Join();
+        // Start another thread to demonstrate legacy Suspend/Resume
+        Console.WriteLine("\n=== Legacy Suspend/Resume Example ===");
+        _workerThread1 = new Thread(WorkerMethod)
+        {
+            Name = "LegacyWorkerThread"
+        };
+        _workerThread1.Start();
+        Thread.Sleep(20);
+        Console.WriteLine("Main: Suspending the worker thread (legacy).");
+        try
+        {
+            _workerThread1.Suspend(); // Deprecated method
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+        Thread.Sleep(20);
+        Console.WriteLine("Main: Resuming the worker thread (legacy).");
+        try
+        {
+            _workerThread1.Resume(); // Deprecated method
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+        }
+
+        _workerThread1.Join();
+        // Demonstrate Interrupt with a named thread
+        Console.WriteLine("\n=== Interrupt Example ===");
+        Thread interruptThread = new Thread(InterruptibleWorker)
+        {
+            Name = "InterruptibleWorkerThread"
+        };
+        interruptThread.Start();
+        Thread.Sleep(20);
+        Console.WriteLine("Main: Interrupting the thread.");
+        interruptThread.Interrupt();
+        interruptThread.Join();
+        Console.WriteLine("Main: Thread example completed.");
+    }
+
+    // Worker method with ManualResetEvent for thread control
+    static void WorkerMethodWithManualResetEvent()
+    {
+        string threadName = Thread.CurrentThread.Name;
+        Console.WriteLine($"{threadName}: Started.");
+        for (int i = 0; i < 5; i++)
+        {
+            _manualResetEvent.WaitOne(); // Wait until the event is signaled
+            Console.WriteLine($"{threadName}: Processing {i + 1}/5...");
+            Thread.Sleep(50); // Simulate work
+        }
+
+        Console.WriteLine($"{threadName}: Finished.");
+    }
+
+    // Legacy worker method for Suspend/Resume demonstration
+    static void WorkerMethod()
+    {
+        string threadName = Thread.CurrentThread.Name;
+        Console.WriteLine($"{threadName}: Started.");
+        for (int i = 0; i < 5; i++)
+        {
+            Console.WriteLine($"{threadName}: Processing {i + 1}/5...");
+            Thread.Sleep(50); // Simulate work
+        }
+
+        Console.WriteLine($"{threadName}: Finished.");
+    }
+
+    // Interruptible Worker method
+    static void InterruptibleWorker()
+    {
+        string threadName = Thread.CurrentThread.Name;
+        Console.WriteLine($"{threadName}: Started.");
+        try
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                Console.WriteLine($"{threadName}: Processing {i + 1}/5...");
+                Thread.Sleep(100); // Simulate work
+            }
+        }
+        catch (ThreadInterruptedException)
+        {
+            Console.WriteLine($"{threadName}: Interrupted during sleep!");
+        }
+
+        Console.WriteLine($"{threadName}: Exiting.");
+    }
+}

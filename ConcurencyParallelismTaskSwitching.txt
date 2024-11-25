@@ -1,0 +1,68 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+class ConcurencyParallelismTaskSwitching
+{
+	static async Task Main()
+	{
+		Console.WriteLine("Starting Concurrency Example...");
+		await ConcurrencyExample();
+		Console.WriteLine("\nStarting Parallelism Example...");
+		ParallelismExample();
+		Console.WriteLine("\nStarting Task Switching Example...");
+		await TaskSwitchingExample();
+		Console.WriteLine("\nAll examples completed.");
+	}
+
+	// Concurrency: Tasks are executed concurrently, interleaving over time.
+	static async Task ConcurrencyExample()
+	{
+		Task task1 = Task.Run(() =>
+		{
+			Thread.Sleep(500); // Simulate work
+			Console.WriteLine("Task 1 completed");
+		});
+		Task task2 = Task.Run(() =>
+		{
+			Thread.Sleep(500); // Simulate work
+			Console.WriteLine("Task 2 completed");
+		});
+		await Task.WhenAll(task2, task1); // Wait for both tasks to complete
+		Console.WriteLine("Both tasks in concurrency example are complete.");
+	}
+
+	// Parallelism: Tasks are executed in parallel on multiple threads.
+	static void ParallelismExample()
+	{
+		Parallel.For(0, 10, i =>
+		{
+			Console.WriteLine($"Processing item {i} on thread {Task.CurrentId}");
+			Thread.Sleep(100); // Simulate work
+		});
+		Console.WriteLine("Parallelism example completed.");
+	}
+
+	// Task Switching: Demonstrates task switching between multiple tasks.
+	static async Task TaskSwitchingExample()
+	{
+		Task[] tasks = new Task[5]; // Create an array of tasks
+		for (int i = 0; i < 5; i++)
+		{
+			int taskId = i; // Capture the task ID for each task
+			tasks[i] = Task.Run(() => PerformTask(taskId));
+		}
+
+		await Task.WhenAll(tasks); // Wait for all tasks to complete
+		Console.WriteLine("Task switching example completed.");
+	}
+
+	static void PerformTask(int taskId)
+	{
+		for (int i = 0; i < 5; i++)
+		{
+			Console.WriteLine($"Task {taskId}: Iteration {i} on Thread {Thread.CurrentThread.ManagedThreadId}");
+			Thread.Sleep(200); // Simulate work
+		}
+	}
+}

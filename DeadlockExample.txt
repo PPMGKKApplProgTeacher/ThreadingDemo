@@ -1,0 +1,97 @@
+using System;
+using System.Threading;
+
+class DeadlockExample
+{
+    private static readonly object _lockA = new object();
+    private static readonly object _lockB = new object();
+
+    static void Main()
+    {
+        Console.WriteLine("=== Deadlock Example ===");
+        RunDeadlockExample();
+
+        Console.WriteLine("\n=== Deadlock-Free Example ===");
+        RunDeadlockFreeExample();
+
+        Console.WriteLine("\nProgram completed.");
+    }
+
+    // Example 1: Deadlock Example
+    static void RunDeadlockExample()
+    {
+        Thread thread1 = new Thread(Thread1DeadlockWork);
+        Thread thread2 = new Thread(Thread2DeadlockWork);
+
+        thread1.Start();
+        thread2.Start();
+
+        thread1.Join();
+        thread2.Join();
+    }
+
+    static void Thread1DeadlockWork()
+    {
+        lock (_lockA)
+        {
+            Console.WriteLine("Thread 1: Acquired lock A, waiting for lock B...");
+            Thread.Sleep(100); // Simulate work
+            lock (_lockB)
+            {
+                Console.WriteLine("Thread 1: Acquired lock B.");
+            }
+        }
+    }
+
+    static void Thread2DeadlockWork()
+    {
+        lock (_lockB)
+        {
+            Console.WriteLine("Thread 2: Acquired lock B, waiting for lock A...");
+            Thread.Sleep(100); // Simulate work
+            lock (_lockA)
+            {
+                Console.WriteLine("Thread 2: Acquired lock A.");
+            }
+        }
+    }
+
+    // Example 2: Deadlock-Free Example
+    static void RunDeadlockFreeExample()
+    {
+        Thread thread1 = new Thread(Thread1DeadlockFreeWork);
+        Thread thread2 = new Thread(Thread2DeadlockFreeWork);
+
+        thread1.Start();
+        thread2.Start();
+
+        thread1.Join();
+        thread2.Join();
+    }
+
+    static void Thread1DeadlockFreeWork()
+    {
+        lock (_lockA)
+        {
+            Console.WriteLine("Thread 1: Acquired lock A, waiting for lock B...");
+            Thread.Sleep(100); // Simulate work
+            lock (_lockB)
+            {
+                Console.WriteLine("Thread 1: Acquired lock B.");
+            }
+        }
+    }
+
+    static void Thread2DeadlockFreeWork()
+    {
+        lock (_lockA) // Lock _lockA first, same as Thread 1
+        {
+            Console.WriteLine("Thread 2: Acquired lock A, waiting for lock B...");
+            Thread.Sleep(100); // Simulate work
+            lock (_lockB)
+            {
+                Console.WriteLine("Thread 2: Acquired lock B.");
+            }
+        }
+    }
+}

@@ -1,0 +1,99 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+class SynchronizationExample
+{
+    private static int _sharedCounter = 0; // Shared resource
+    private static readonly object _lock = new object(); // Lock for synchronization
+    private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(2); // Allow 2 concurrent tasks
+
+    static async Task Main()
+    {
+        Console.WriteLine("=== Starting Synchronized Async Tasks Example ===");
+        await RunSynchronizationExample();
+
+        Console.WriteLine("\n=== Starting Coordination Example ===");
+        await RunCoordinationExample();
+
+        Console.WriteLine("\n=== Starting SemaphoreSlim Example ===");
+        await RunSemaphoreSlimExample();
+
+        Console.WriteLine("\nAll tasks completed.");
+    }
+
+    // Example 1: Synchronizing access to a shared resource
+    static async Task RunSynchronizationExample()
+    {
+        Task task1 = IncrementCounterAsync("Task1");
+        Task task2 = IncrementCounterAsync("Task2");
+
+        await Task.WhenAll(task1, task2);
+
+        Console.WriteLine($"Final counter value: {_sharedCounter}");
+    }
+
+    static async Task IncrementCounterAsync(string taskName)
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            await Task.Delay(100); // Simulate async work
+
+            lock (_lock) // Synchronize access to the shared resource
+            {
+                int temp = _sharedCounter;
+                Console.WriteLine($"{taskName} read counter: {temp}");
+                temp++;
+                _sharedCounter = temp;
+                Console.WriteLine($"{taskName} updated counter to: {_sharedCounter}");
+            }
+        }
+    }
+
+    // Example 2: Coordinating asynchronous tasks
+    static async Task RunCoordinationExample()
+    {
+        Task<int> task1 = DoWorkAsync("Task1", 3);
+        Task<int> task2 = DoWorkAsync("Task2", 5);
+
+        int[] results = await Task.WhenAll(task1, task2);
+
+        Console.WriteLine($"Total result: {results[0] + results[1]}");
+    }
+
+    static async Task<int> DoWorkAsync(string taskName, int value)
+    {
+        Console.WriteLine($"{taskName} starting...");
+        await Task.Delay(value * 1000); // Simulate async work
+        Console.WriteLine($"{taskName} completed with value {value}.");
+        return value;
+    }
+
+    // Example 3: Using SemaphoreSlim for controlled access
+    static async Task RunSemaphoreSlimExample()
+    {
+        Task task1 = AccessSharedResourceAsync("Task1");
+        Task task2 = AccessSharedResourceAsync("Task2");
+        Task task3 = AccessSharedResourceAsync("Task3");
+        Task task4 = AccessSharedResourceAsync("Task4");
+
+        await Task.WhenAll(task1, task2, task3, task4);
+    }
+
+    static async Task AccessSharedResourceAsync(string taskName)
+    {
+        Console.WriteLine($"{taskName} is waiting to access the shared resource...");
+        await _semaphore.WaitAsync(); // Wait to enter the semaphore
+        try
+        {
+            Console.WriteLine($"{taskName} has entered the critical section.");
+            await Task.Delay(1000); // Simulate async work in the critical section
+            Console.WriteLine($"{taskName} is leaving the critical section.");
+        }
+        finally
+        {
+            _semaphore.Release(); // Release the semaphore
+            Console.WriteLine($"{taskName} has released the semaphore.");
+        }
+    }
+}

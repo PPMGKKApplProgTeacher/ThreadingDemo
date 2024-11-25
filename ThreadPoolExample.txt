@@ -1,0 +1,56 @@
+using System;
+using System.Threading;
+
+class ThreadPoolExample
+{
+    static void Main()
+    {
+		TreadPool();
+		ThreadPoolLimits();
+    }
+	
+
+    // Task to be executed by the thread pool
+    static void PerformTask(object state)
+    {
+        int taskId = (int)state;
+        Console.WriteLine($"Task {taskId} started on Thread {Thread.CurrentThread.ManagedThreadId}");
+        Thread.Sleep(1000); // Simulate work
+        Console.WriteLine($"Task {taskId} completed on Thread {Thread.CurrentThread.ManagedThreadId}");
+    }
+	
+	static void TreadPool() {
+	
+        Console.WriteLine("Starting Thread Pool example...");
+
+        // Queue multiple tasks to the thread pool
+        for (int i = 1; i <= 5; i++)
+        {
+            int taskId = i; // Capture the loop variable
+            ThreadPool.QueueUserWorkItem(PerformTask, taskId);
+        }
+
+        // Allow some time for the thread pool tasks to complete
+        Thread.Sleep(3000);
+
+        Console.WriteLine("Main thread completed.");
+	}
+	static void ThreadPoolLimits() {		
+        // Set thread pool limits
+        ThreadPool.SetMinThreads(2, 2); // Minimum worker and I/O threads
+        ThreadPool.SetMaxThreads(4, 4); // Maximum worker and I/O threads
+
+        Console.WriteLine("Starting Thread Pool with custom limits...");
+
+        for (int i = 1; i <= 6; i++)
+        {
+            int taskId = i;
+            ThreadPool.QueueUserWorkItem(PerformTask, taskId);
+        }
+
+        // Allow time for thread pool tasks to complete
+        Thread.Sleep(5000);
+
+        Console.WriteLine("Main thread completed.");
+	}
+}
